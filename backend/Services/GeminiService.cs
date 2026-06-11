@@ -34,9 +34,14 @@ public class GeminiService
         };
 
         var resp = await _http.PostAsJsonAsync(url, payload);
-        resp.EnsureSuccessStatusCode();
+        var responseBody = await resp.Content.ReadAsStringAsync();
 
-        using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        if (!resp.IsSuccessStatusCode)
+        {
+            throw new Exception($"Gemini API error {(int)resp.StatusCode}: {responseBody}");
+        }
+
+        using var doc = JsonDocument.Parse(responseBody);
         return doc.RootElement
             .GetProperty("candidates")[0]
             .GetProperty("content")
